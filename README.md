@@ -1,0 +1,2 @@
+# SBM Hypixel Verified Users Tracker
+The purpose of this project is to create a database of relationships between minecraft accounts on hypixel and their owner's discord accounts. This is the backend API to manage the storage of this information.
