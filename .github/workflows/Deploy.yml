@@ -45,4 +45,4 @@ jobs:
           username: ${{ secrets.SSH_USERNAME }}
           password: ${{ secrets.SSH_PASSWORD }}
           source: ./frontend
-          target: verified-users/frontend
+          target: verified-users
