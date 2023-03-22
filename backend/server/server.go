@@ -7,7 +7,7 @@ import (
 	"strings"
 	"encoding/json"
 
-	"sbm.gg/verified-users/mongo"
+	"verified-users/mongo"
 
 	"github.com/gin-gonic/gin"
 )

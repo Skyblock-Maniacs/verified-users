@@ -1,4 +1,4 @@
-module sbm.gg/verified-users
+module verified-users
 
 go 1.19
 

@@ -3,8 +3,8 @@ package main
 import (
 	"log"
 
-	"sbm.gg/verified-users/server"
-	"sbm.gg/verified-users/mongo"
+	"verified-users/server"
+	"verified-users/mongo"
 
 	"github.com/joho/godotenv"
 )

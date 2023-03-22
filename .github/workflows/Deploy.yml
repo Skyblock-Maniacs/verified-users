@@ -24,7 +24,7 @@ jobs:
         run: go mod verify
 
       - name: Build
-        run: go build
+        run: cd backend && go build
 
       - name: test
         run: ls
@@ -35,5 +35,14 @@ jobs:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USERNAME }}
           password: ${{ secrets.SSH_PASSWORD }}
-          source: "verified-users"
+          source: ./backend/verified-users
           target: verified-users
+      
+      - name: Move frontend to server
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          password: ${{ secrets.SSH_PASSWORD }}
+          source: ./frontend
+          target: verified-users/frontend
