@@ -35,7 +35,7 @@ func Init() {
 	gin.SetMode(gin.ReleaseMode)
 	r := gin.Default()
 
-	r.GET("/api/status", func(c *gin.Context) {
+	r.GET("/api/v1/status", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"message": "Hello World"})
 	})
 	r.GET("/favicon.ico", func (c *gin.Context) { c.Status(http.StatusAccepted) })
