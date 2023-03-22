@@ -21,7 +21,7 @@ jobs:
           go-version: 1.19
 
       - name: Verify Dependencies
-        run: go mod verify
+        run: cd backend && go mod verify
 
       - name: Build
         run: cd backend && go build
