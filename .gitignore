@@ -1,0 +1,7 @@
+.env
+*.dill
+*.dylib
+*.exe
+*.exe~
+*.so
+verified-users
