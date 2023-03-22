@@ -51,7 +51,7 @@ func Init() {
 	}
 
 	log.Println("Server started on " + os.Getenv("PORT"))
-	r.Run(":" + os.Getenv("PORT"))
+	r.Run()
 }
 
 func authMiddleware() gin.HandlerFunc {
