@@ -5,7 +5,8 @@ const nextConfig = {
     return [
       {
         source: '/fe-api/:path*',
-        destination: '/api/:path*'
+        destination: '/api/:path*',
+        permanent: true,
       }
     ]
   }
