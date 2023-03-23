@@ -1,35 +1,35 @@
 package server
 
 import (
+	"encoding/json"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"strings"
-	"encoding/json"
 
 	"verified-users/mongo"
+	"verified-users/requests"
 
-	"github.com/gin-gonic/gin"
 	"github.com/gin-contrib/cors"
+	"github.com/gin-gonic/gin"
 )
 
 type UserRequestBody struct {
-	UUID string `json:"uuid"`
-	DiscordId string `json:"discordId"`
+	UUID 		string `json:"uuid"`
+	DiscordId 	string `json:"discordId"`
 }
-type HypixelRes struct {
-	Success bool `json:"success"`
-	Player struct {
-		SocialMedia struct {
-			Links struct {
-				DISCORD string `json:"DISCORD"`
-			} `json:"links"`
-		} `json:"socialMedia"`
-	} `json:"player"`
+
+type CloudflarePost struct {
+	Cf string `json:"cf-turnstile-response"`
 }
-type DiscordRes struct {
-	Username string `json:"username"`
-	Discriminator string `json:"discriminator"`
+type CloudflareRes struct {
+	Success 		bool `json:"success"`
+	Errors 			[]string `json:"error-codes"`
+	Challenge_ts 	string `json:"challenge_ts"`
+	Hostname 		string `json:"hostname"`
+	Action 			string `json:"action"`
+	Cdata 			string `json:"cdata"`
 }
 
 func Init() {
@@ -45,6 +45,13 @@ func Init() {
 	r.NoRoute(func(c *gin.Context) {
 		c.JSON(http.StatusNotFound, gin.H{"message": "Endpoint Not Found"})
 	})
+
+	lookup := r.Group("/api/v1/lookup", cloudflareMiddleware())
+	{
+		lookup.POST("/ign/:ign", lookupIgn)
+		lookup.POST("/discord/:discordId", lookupDiscord)
+		lookup.POST("/uuid/:uuid", lookupUuid)
+	}
 
 	v1 := r.Group("/api/v1", authMiddleware())
 	{
@@ -104,6 +111,129 @@ func authMiddleware() gin.HandlerFunc {
 	}
 }
 
+func cloudflareMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var body CloudflarePost
+		if err := c.BindJSON(&body); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"message": "Cloudflare Error"})
+			c.Abort()
+			return
+		}
+
+		form := url.Values{}
+		form.Add("secret", os.Getenv("CLOUDFLARE_TURNSILE_SECRET"))
+		form.Add("response", body.Cf)
+		form.Add("remoteip", c.ClientIP())
+
+		CloudflareResp, err := http.PostForm("https://challenges.cloudflare.com/turnstile/v0/siteverify", form)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"message": "Cloudflare Error"})
+			c.Abort()
+			return
+		}
+		var CloudflareRes CloudflareRes
+		if err := json.NewDecoder(CloudflareResp.Body).Decode(&CloudflareRes); err != nil {
+			log.Println(err)
+			c.JSON(http.StatusInternalServerError, gin.H{"message": "Internal Server Error"})
+			return
+		}
+		if !CloudflareRes.Success {
+			c.JSON(http.StatusUnauthorized, gin.H{"message": "Cloudflare Error", "errors": CloudflareRes.Errors})
+			c.Abort()
+			return
+		}
+
+		c.Next()
+	}
+}
+
+func lookupUuid(c *gin.Context) {
+	mojangProfile, err := requests.MojangProfileRequest(c.Param("uuid"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
+		return
+	}
+	dbUser, err := mongo.GetUserByUUID(mojangProfile.Id)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "User does not exist within our database."})
+		return
+	}
+	discordUser, err := requests.DiscordRequest(dbUser.Id)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "There was an error contacting the discord API. Please try again later."})
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"data": 
+			gin.H{
+				"ign": mojangProfile.Name,
+				"uuid": mojangProfile.Id,
+				"discordId": discordUser.Id,
+				"disordUser": discordUser,
+				"skin": mojangProfile.Properties[0].Value,
+			},
+		})
+}
+
+func lookupIgn(c *gin.Context) {
+	mojangUser, err := requests.MojangRequest(c.Param("ign"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
+		return
+	}
+	mojangProfile, err := requests.MojangProfileRequest(mojangUser.Id)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
+		return
+	}
+	dbUser, err := mongo.GetUserByUUID(mojangUser.Id)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "User does not exist within our database."})
+		return
+	}
+	discordUser, err := requests.DiscordRequest(dbUser.Id)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "There was an error contacting the discord API. Please try again later."})
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"data": 
+			gin.H{
+				"ign": mojangUser.Name,
+				"uuid": mojangUser.Id,
+				"discordId": discordUser.Id,
+				"disordUser": discordUser,
+				"skin": mojangProfile.Properties[0].Value,
+			},
+		})
+}
+
+func lookupDiscord(c *gin.Context) {
+	dbUser, err := mongo.GetUserByDiscordID(c.Param("discordId"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "User does not exist within our database."})
+		return
+	}
+	mojangProfile, err := requests.MojangProfileRequest(dbUser.Uuid)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
+		return
+	}
+	discordUser, err := requests.DiscordRequest(dbUser.Id)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "There was an error contacting the discord API. Please try again later."})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"data": 
+			gin.H{
+				"ign": mojangProfile.Name,
+				"uuid": mojangProfile.Id,
+				"discordId": discordUser.Id,
+				"disordUser": discordUser,
+				"skin": mojangProfile.Properties[0].Value,
+			},
+		})
+}
+
 func getUser(c *gin.Context) {
 	uuid, discordId := c.Query("uuid"), c.Query("discordId")
 	if uuid == "" && discordId == "" {
@@ -145,32 +275,15 @@ func postUser(c *gin.Context) {
 		return
 	}
 
-	HypixelResp, err := http.Get("https://api.hypixel.net/player?key=" + os.Getenv("HYPIXEL_API_KEY") + "&uuid=" + requestBody.UUID)
+	hypixelUser, err := requests.HypixelRequest(requestBody.UUID)
 	if err != nil {
-		log.Println(err)
-		c.JSON(http.StatusInternalServerError, gin.H{"message": "Internal Server Error"})
-		return
-	}
-	var hypixelUser HypixelRes
-	if err := json.NewDecoder(HypixelResp.Body).Decode(&hypixelUser); err != nil {
-		log.Println(err)
-		c.JSON(http.StatusInternalServerError, gin.H{"message": "Internal Server Error"})
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "There was an error contacting the hypixel API. Please try again later."})
 		return
 	}
 
-	client := &http.Client{}
-	req, _ := http.NewRequest("GET", "https://discord.com/api/v10/users/" + requestBody.DiscordId, nil)
-	req.Header.Set("Authorization", "Bot " + os.Getenv("DISCORD_BOT_TOKEN"))
-	DiscordResp, err := client.Do(req)
+	discordUser, err := requests.DiscordRequest(requestBody.DiscordId)
 	if err != nil {
-		log.Println(err)
-		c.JSON(http.StatusInternalServerError, gin.H{"message": "Internal Server Error"})
-		return
-	}
-	var discordUser DiscordRes
-	if err := json.NewDecoder(DiscordResp.Body).Decode(&discordUser); err != nil {
-		log.Println(err)
-		c.JSON(http.StatusInternalServerError, gin.H{"message": "Internal Server Error"})
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "There was an error contacting the discord API. Please try again later."})
 		return
 	}
 
