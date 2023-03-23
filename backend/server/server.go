@@ -10,6 +10,7 @@ import (
 	"verified-users/mongo"
 
 	"github.com/gin-gonic/gin"
+	"github.com/gin-contrib/cors"
 )
 
 type UserRequestBody struct {
@@ -34,6 +35,8 @@ type DiscordRes struct {
 func Init() {
 	gin.SetMode(gin.ReleaseMode)
 	r := gin.Default()
+
+	r.Use(cors.Default())
 
 	r.GET("/api/v1/status", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"message": "Hello World"})
@@ -172,7 +175,7 @@ func postUser(c *gin.Context) {
 	}
 
 	if hypixelUser.Player.SocialMedia.Links.DISCORD != discordUser.Username + "#" + discordUser.Discriminator {
-		c.JSON(http.StatusBadRequest, gin.H{"message": "Discord ID and UUID do not match"})
+		c.JSON(http.StatusAccepted, gin.H{"message": "Discord ID and UUID do not match"})
 		return
 	}
 	
