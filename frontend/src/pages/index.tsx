@@ -125,7 +125,7 @@ export default function Home() {
                 height={500}
                 width={500}
                 skinUrl={`https://crafatar.com/skins/${user.uuid}`}
-                capeUrl={`${user.cape}?notfromcache`}
+                capeUrl={user.cape != "" ? user.cape : undefined}
               />
             </SimpleGrid>
           )
