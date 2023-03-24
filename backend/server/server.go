@@ -162,6 +162,8 @@ func lookupUuid(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"message": "There was an error contacting the discord API. Please try again later."})
 	}
+	cape, _ := requests.DetermineCape(mojangProfile.Id, mojangProfile.Name)
+
 	c.JSON(http.StatusOK, gin.H{
 		"data": 
 			gin.H{
@@ -170,6 +172,7 @@ func lookupUuid(c *gin.Context) {
 				"discordId": discordUser.Id,
 				"disordUser": discordUser,
 				"skin": mojangProfile.Properties[0].Value,
+				"cape": cape,
 			},
 		})
 }
@@ -194,6 +197,7 @@ func lookupIgn(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"message": "There was an error contacting the discord API. Please try again later."})
 	}
+	cape, _ := requests.DetermineCape(mojangProfile.Id, mojangProfile.Name)
 	c.JSON(http.StatusOK, gin.H{
 		"data": 
 			gin.H{
@@ -202,6 +206,7 @@ func lookupIgn(c *gin.Context) {
 				"discordId": discordUser.Id,
 				"disordUser": discordUser,
 				"skin": mojangProfile.Properties[0].Value,
+				"cape": cape,
 			},
 		})
 }
@@ -222,6 +227,7 @@ func lookupDiscord(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"message": "There was an error contacting the discord API. Please try again later."})
 		return
 	}
+	cape, _ := requests.DetermineCape(mojangProfile.Id, mojangProfile.Name)
 	c.JSON(http.StatusOK, gin.H{
 		"data": 
 			gin.H{
@@ -230,6 +236,7 @@ func lookupDiscord(c *gin.Context) {
 				"discordId": discordUser.Id,
 				"disordUser": discordUser,
 				"skin": mojangProfile.Properties[0].Value,
+				"cape": cape,
 			},
 		})
 }

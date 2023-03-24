@@ -110,3 +110,19 @@ func MojangProfileRequest(uuid string) (*MojangProfileRes, error) {
 	}
 	return mojangProfileUser, nil
 }
+
+func DetermineCape(uuid string, ign string) (string, error) {
+	mojangUrl, hasMojang := "https://crafatar.com/capes/" + uuid, false
+	mojangResp, err := http.Get(mojangUrl)
+	if err != nil {
+		return "", err
+	}
+	if mojangResp.StatusCode == 200 {
+		hasMojang = true
+	}
+	if hasMojang {
+		return mojangUrl, nil
+	} else {
+		return "", nil
+	}
+}
