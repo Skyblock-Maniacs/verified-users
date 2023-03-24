@@ -54,7 +54,7 @@ export default function Home() {
   const [cloudflareToken, setCloudflareToken] = useState<string>("")
 
   const handleSubmit = async (token: string) => {
-    await axios.post(`http://localhost:15253/api/v1/lookup/${type}/${value}`, {"cf-turnstile-response": token})
+    await axios.post(`https://users.sbm.gg/api/v1/lookup/${type}/${value}`, {"cf-turnstile-response": token})
       .then(async (res) => {
         setUserData(res.data.data); 
         setModalOpen(false)}
