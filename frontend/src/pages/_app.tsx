@@ -1,10 +1,18 @@
 import { AppProps } from 'next/app';
 import Head from 'next/head';
-import { MantineProvider } from '@mantine/core';
+import { Global, Header, MantineProvider } from '@mantine/core';
+import { createStyles } from "@mantine/styles"
 import { Notifications } from '@mantine/notifications';
+
+const useStyles = createStyles((theme) => ({
+  header: {
+    background: "#7289da"
+  }
+}))
 
 export default function App(props: AppProps) {
   const { Component, pageProps } = props;
+  const {classes} = useStyles()
 
   return (
     <>
@@ -21,7 +29,23 @@ export default function App(props: AppProps) {
           colorScheme: 'light',
         }}
       >
+        <Global
+          styles={(theme) => ({
+            body: {
+              background: "#282b30"
+            }
+          })}
+        />
         <Notifications/>
+        <Header
+          height={70}
+          withBorder={false}
+          className={classes.header}
+        >
+          <div>
+
+          </div>
+        </Header>
         <Component {...pageProps} />
       </MantineProvider>
     </>
