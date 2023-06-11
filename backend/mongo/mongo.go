@@ -17,11 +17,11 @@ type GlobalUser struct {
 }
 type UserKeyData struct {
 	Id string    `json:"_id" bson:"_id"`
-	ApiKey apiKey `json:"apiKey" bson:"apiKey"`
+	Api api 	 `json:"api" bson:"api"`
 }
-type apiKey struct {
+type api struct {
 	Key string            `json:"key" bson:"key"`
-	Permissions []string  `json:"permissions" bson:"permissions"`
+	Permissions []string  `json:"globalUsersPermissions" bson:"globalUsersPermissions"`
 }
 
 var MongoClient *mongo.Client

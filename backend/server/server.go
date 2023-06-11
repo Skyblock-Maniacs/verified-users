@@ -92,17 +92,17 @@ func authMiddleware() gin.HandlerFunc {
 			c.Abort()
 			return
 		}
-		if c.Request.Method == "GET" && !findPerm(data.ApiKey.Permissions, "usersGet") {
+		if c.Request.Method == "GET" && !findPerm(data.Api.Permissions, "usersGet") {
 			c.JSON(http.StatusUnauthorized, gin.H{"message": "Insufficient Permissions"})
 			c.Abort()
 			return
 		}
-		if c.Request.Method == "POST" && !findPerm(data.ApiKey.Permissions, "usersPost") {
+		if c.Request.Method == "POST" && !findPerm(data.Api.Permissions, "usersPost") {
 			c.JSON(http.StatusUnauthorized, gin.H{"message": "Insufficient Permissions"})
 			c.Abort()
 			return
 		}
-		if c.Request.Method == "DELETE" && !findPerm(data.ApiKey.Permissions, "usersDelete") {
+		if c.Request.Method == "DELETE" && !findPerm(data.Api.Permissions, "usersDelete") {
 			c.JSON(http.StatusUnauthorized, gin.H{"message": "Insufficient Permissions"})
 			c.Abort()
 			return
