@@ -52,14 +52,10 @@ func GetApiKeyData(key string) (UserKeyData, error) {
 	database := MongoClient.Database(os.Getenv("MONGO_DATABASE"))
 	collection := database.Collection(os.Getenv("MONGO_KEY_COLLECTION"))
 
-	opts := options.FindOne().
-		SetProjection(bson.D{{Key: "apiKey", Value: 1}, {Key: "_id", Value: 1}})
-
 	var result UserKeyData
 	err := collection.FindOne(
 		context.TODO(),
 		bson.M{"api.key": key},
-		opts,
 	).Decode(&result)
 
 	return result, err
