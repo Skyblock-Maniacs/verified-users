@@ -58,7 +58,7 @@ func GetApiKeyData(key string) (UserKeyData, error) {
 	var result UserKeyData
 	err := collection.FindOne(
 		context.TODO(),
-		bson.M{"apiKey.key": key},
+		bson.M{"api.key": key},
 		opts,
 	).Decode(&result)
 
